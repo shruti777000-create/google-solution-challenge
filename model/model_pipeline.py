@@ -34,12 +34,14 @@ from sklearn.preprocessing import LabelEncoder
 # CONFIGURATION — edit these to match P1's data
 # ─────────────────────────────────────────────
 
-DATA_PATH      = "../data/adult_clean.csv"   # P1 will put data here
+TRAIN_PATH     = "../data/processed/adult_train_clean.csv"  # P1 train data
+TEST_PATH      = "../data/processed/adult_test_clean.csv"   # P1 test data
+DATA_PATH      = TRAIN_PATH                  # fallback for single-file mode
 MODEL_PATH     = "saved_model.pkl"           # where we save trained model
 PRED_PATH      = "predictions.csv"           # what we send to P3
-TARGET_COL     = "income"                    # column we're predicting
-SENSITIVE_COLS = ["gender", "race"]          # columns P3 needs for fairness audit
-TEST_SIZE      = 0.2                         # 20% of data used for testing
+TARGET_COL     = "income_binary"             # 0/1 column from P1's cleaned data
+SENSITIVE_COLS = ["sex", "race"]             # columns P3 needs for fairness audit
+TEST_SIZE      = 0.2                         # used only if no separate test file
 RANDOM_STATE   = 42                          # keeps results consistent
 
 
@@ -47,83 +49,88 @@ RANDOM_STATE   = 42                          # keeps results consistent
 # STEP 1 — LOAD DATA
 # ─────────────────────────────────────────────
 
-def load_data(path=DATA_PATH):
+def load_data(train_path=TRAIN_PATH, test_path=TEST_PATH):
     """
-    Loads the clean CSV from Person 1.
-    Returns a pandas DataFrame.
+    Loads P1's cleaned train and test CSVs.
+    If the files don't exist yet, falls back to placeholder data.
+    Returns: df_train, df_test (as separate DataFrames)
     """
-    print(f"\n📂 Loading data from: {path}")
+    print(f"\n📂 Loading data...")
 
-    if os.path.exists(path):
-        # Real data from Person 1
-        df = pd.read_csv(path)
-        print(f"✅ Loaded {len(df)} rows and {len(df.columns)} columns")
-        print(f"   Columns: {list(df.columns)}")
-        return df
+    if os.path.exists(train_path) and os.path.exists(test_path):
+        # Real data from Person 1 — separate train/test files
+        df_train = pd.read_csv(train_path)
+        df_test  = pd.read_csv(test_path)
+        print(f"✅ Train set loaded: {len(df_train)} rows, {len(df_train.columns)} columns")
+        print(f"✅ Test  set loaded: {len(df_test)} rows")
+        print(f"   Columns: {list(df_train.columns)}")
+        return df_train, df_test
     else:
-        # PLACEHOLDER — generates fake data if P1's file isn't ready yet
-        print("⚠️  adult_clean.csv not found — using placeholder data")
-        print(f"   (Expected at: {os.path.abspath(path)})")
+        # PLACEHOLDER — generates fake data if P1's files aren't ready yet
+        print("⚠️  Real data not found — using placeholder data")
+        print(f"   (Expected train at: {os.path.abspath(train_path)})")
         df = pd.DataFrame({
-            "age":        np.random.randint(20, 65, 500),
-            "education":  np.random.randint(1, 16, 500),
-            "hours":      np.random.randint(20, 60, 500),
-            "gender":     np.random.choice(["Male", "Female"], 500),
-            "race":       np.random.choice(["White", "Black", "Asian", "Other"], 500),
-            "income":     np.random.choice([0, 1], 500)   # 1 = high income
+            "age":          np.random.randint(20, 65, 500),
+            "education_num": np.random.randint(1, 16, 500),
+            "hours_per_week": np.random.randint(20, 60, 500),
+            "sex":          np.random.choice(["Male", "Female"], 500),
+            "race":         np.random.choice(["White", "Black", "Asian", "Other"], 500),
+            "income_binary": np.random.choice([0, 1], 500)
         })
-        return df
+        # Split placeholder into train/test
+        split = int(len(df) * 0.8)
+        return df.iloc[:split].copy(), df.iloc[split:].copy()
 
 
 # ─────────────────────────────────────────────
 # STEP 2 — PREPARE DATA FOR TRAINING
 # ─────────────────────────────────────────────
 
-def prepare_data(df):
+def prepare_data(df_train, df_test):
     """
-    Splits data into features (X) and target (y).
-    Encodes any text columns into numbers so the model can read them.
-    Splits into training set and test set.
+    Prepares the separate train and test DataFrames from P1.
+    Encodes text columns into numbers so the model can read them.
 
-    Returns: X_train, X_test, y_train, y_test, df_test
+    Returns: X_train, X_test, y_train, y_test, df_test_orig, label_encoders
     """
     print("\n🔧 Preparing data...")
 
-    df = df.copy()
+    df_train = df_train.copy()
+    df_test  = df_test.copy()
 
-    # Separate target column
-    y = df[TARGET_COL]
-    X = df.drop(columns=[TARGET_COL])
+    # Drop columns that shouldn't be model features
+    # 'income' is the text label — we use 'income_binary' as target instead
+    drop_cols = [col for col in ["income", "fnlwgt"] if col in df_train.columns]
+    if drop_cols:
+        df_train = df_train.drop(columns=drop_cols)
+        df_test  = df_test.drop(columns=drop_cols)
+        print(f"   Dropped non-feature columns: {drop_cols}")
+
+    # Separate target
+    y_train = df_train[TARGET_COL].values
+    y_test  = df_test[TARGET_COL].values
+    X_train = df_train.drop(columns=[TARGET_COL])
+    X_test  = df_test.drop(columns=[TARGET_COL])
 
     # Encode text columns to numbers
-    # (ML models only understand numbers, not words like "Male"/"Female")
+    # (ML models only understand numbers, not words)
     label_encoders = {}
-    for col in X.select_dtypes(include="object").columns:
+    text_cols = X_train.select_dtypes(include=["object", "str"]).columns.tolist()
+    for col in text_cols:
         le = LabelEncoder()
-        X[col] = le.fit_transform(X[col])
+        X_train[col] = le.fit_transform(X_train[col].astype(str))
+        X_test[col]  = le.transform(X_test[col].astype(str))
         label_encoders[col] = le
         print(f"   Encoded column: {col}")
 
-    # Encode target if needed
-    if y.dtype == object:
-        le_target = LabelEncoder()
-        y = le_target.fit_transform(y)
-
-    # Train/test split
-    # 80% of data trains the model, 20% is kept aside to test it
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y,
-        test_size=TEST_SIZE,
-        random_state=RANDOM_STATE
-    )
-
-    # Keep the original (un-encoded) test rows for P3's fairness audit
-    df_test = df.iloc[X_test.index].copy()
+    # Keep original (un-encoded) test rows for P3's fairness audit
+    df_test_orig = df_test.copy()
+    df_test_orig[TARGET_COL] = y_test
 
     print(f"✅ Training set: {len(X_train)} rows")
     print(f"✅ Test set:     {len(X_test)} rows")
 
-    return X_train, X_test, y_train, y_test, df_test, label_encoders
+    return X_train, X_test, y_train, y_test, df_test_orig, label_encoders
 
 
 # ─────────────────────────────────────────────
@@ -246,11 +253,11 @@ def main():
     print("  Person 2 — Model Engineer")
     print("=" * 50)
 
-    # Step 1: Load
-    df = load_data()
+    # Step 1: Load — uses P1's real train/test CSVs
+    df_train, df_test_raw = load_data()
 
-    # Step 2: Prepare
-    X_train, X_test, y_train, y_test, df_test, encoders = prepare_data(df)
+    # Step 2: Prepare — encode and clean both sets
+    X_train, X_test, y_train, y_test, df_test, encoders = prepare_data(df_train, df_test_raw)
 
     # Step 3: Train & compare BOTH models
     print("\n" + "-" * 50)
@@ -287,8 +294,8 @@ def main():
     save_predictions(df_test, predictions)
 
     print("\n" + "=" * 50)
-    print("✅ Day 2 pipeline complete!")
-    print("   Models compared, best one saved.")
+    print("✅ Day 3 pipeline complete!")
+    print("   Wired to P1's real data. Outputs ready for P3 & P4.")
     print("=" * 50)
 
 
