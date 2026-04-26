@@ -1,0 +1,71 @@
+
+=====================================
+   FAIRNESS AI PROJECT - DATA REPORT
+   Person 1 (Data) - Final Summary
+=====================================
+
+DATASET OVERVIEW
+----------------
+Total training records : 30,162
+High income (>50K)     : 7,508 (24.9%)
+Low income (<=50K)     : 22,654 (75.1%)
+
+⚠ Dataset is IMBALANCED — 75% low income vs 25% high income
+  Person 2: Consider using class_weight='balanced' in your model
+
+GENDER BIAS
+-----------
+Female  →  11.4% earn >50K
+Male    →  31.4% earn >50K
+GAP     →  20.0% difference ⚠ HIGH BIAS
+
+RACE BIAS
+---------
+Other              →   9.1% earn >50K
+Amer-Indian-Eskimo →  11.9% earn >50K
+Black              →  13.0% earn >50K
+Asian-Pac-Islander →  27.7% earn >50K
+White              →  26.4% earn >50K
+GAP                →  18.6% difference ⚠ HIGH BIAS
+
+AGE BIAS
+--------
+18-25  →   2.0% earn >50K
+26-35  →  19.1% earn >50K
+36-45  →  35.2% earn >50K
+46-55  →  40.2% earn >50K  ← PEAK earning age
+56-65  →  32.2% earn >50K
+65+    →  22.5% earn >50K
+
+EDUCATION BIAS
+--------------
+Low education  (1-6)   →  0-7% earn >50K
+Mid education  (7-12)  →  5-25% earn >50K
+High education (13-16) →  42-75% earn >50K
+GAP → 74.9% difference ⚠ HIGHEST BIAS
+
+MISSING DATA (removed during cleaning)
+---------------------------------------
+workclass      : 1,836 rows removed
+occupation     : 1,843 rows removed
+native_country :   583 rows removed
+Total removed  : ~2,400 rows (~7% of data)
+
+FILES DELIVERED BY PERSON 1
+-----------------------------
+data/processed/adult_train_clean.csv  ← main training data
+data/processed/adult_test_clean.csv   ← main test data
+data/charts/gender_income_gap.png     ← for dashboard
+data/charts/race_income_gap.png       ← for dashboard
+data/charts/age_income_distribution.png ← for dashboard
+data/summary/gender_stats.csv         ← for Person 3
+data/summary/race_stats.csv           ← for Person 3
+data/summary/age_stats.csv            ← for Person 3
+data/summary/overall_summary.json     ← for Person 4
+
+RECOMMENDATIONS FOR TEAM
+--------------------------
+Person 2 (Model)    → Use class_weight='balanced' due to imbalanced data
+Person 3 (Fairness) → Focus on gender gap (20%) and race gap (18.6%)
+Person 4 (Dashboard)→ Highlight gender and race charts prominently
+=====================================
