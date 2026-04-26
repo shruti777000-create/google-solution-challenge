@@ -54,23 +54,25 @@ def load_data(path=DATA_PATH):
     """
     print(f"\n📂 Loading data from: {path}")
 
-    # TODO Day 2: uncomment when P1 delivers the data file
-    # df = pd.read_csv(path)
-    # print(f"✅ Loaded {len(df)} rows and {len(df.columns)} columns")
-    # print(f"   Columns: {list(df.columns)}")
-    # return df
-
-    # PLACEHOLDER — generates fake data so pipeline runs today
-    print("⚠️  Using placeholder data (swap for real data on Day 2)")
-    df = pd.DataFrame({
-        "age":        np.random.randint(20, 65, 500),
-        "education":  np.random.randint(1, 16, 500),
-        "hours":      np.random.randint(20, 60, 500),
-        "gender":     np.random.choice(["Male", "Female"], 500),
-        "race":       np.random.choice(["White", "Black", "Asian", "Other"], 500),
-        "income":     np.random.choice([0, 1], 500)   # 1 = high income
-    })
-    return df
+    if os.path.exists(path):
+        # Real data from Person 1
+        df = pd.read_csv(path)
+        print(f"✅ Loaded {len(df)} rows and {len(df.columns)} columns")
+        print(f"   Columns: {list(df.columns)}")
+        return df
+    else:
+        # PLACEHOLDER — generates fake data if P1's file isn't ready yet
+        print("⚠️  adult_clean.csv not found — using placeholder data")
+        print(f"   (Expected at: {os.path.abspath(path)})")
+        df = pd.DataFrame({
+            "age":        np.random.randint(20, 65, 500),
+            "education":  np.random.randint(1, 16, 500),
+            "hours":      np.random.randint(20, 60, 500),
+            "gender":     np.random.choice(["Male", "Female"], 500),
+            "race":       np.random.choice(["White", "Black", "Asian", "Other"], 500),
+            "income":     np.random.choice([0, 1], 500)   # 1 = high income
+        })
+        return df
 
 
 # ─────────────────────────────────────────────
@@ -250,19 +252,43 @@ def main():
     # Step 2: Prepare
     X_train, X_test, y_train, y_test, df_test, encoders = prepare_data(df)
 
-    # Step 3: Train
-    model = train_model(X_train, y_train, model_type="logistic")
+    # Step 3: Train & compare BOTH models
+    print("\n" + "-" * 50)
+    print("--- MODEL COMPARISON ---")
+    print("-" * 50)
 
-    # Step 4: Evaluate
-    predictions = evaluate_model(model, X_test, y_test, df_test)
+    model_lr  = train_model(X_train, y_train, model_type="logistic")
+    preds_lr  = evaluate_model(model_lr, X_test, y_test, df_test)
 
-    # Step 5: Save
+    model_dt  = train_model(X_train, y_train, model_type="tree")
+    preds_dt  = evaluate_model(model_dt, X_test, y_test, df_test)
+
+    # Pick the better model automatically
+    acc_lr = accuracy_score(y_test, preds_lr)
+    acc_dt = accuracy_score(y_test, preds_dt)
+
+    print("\n" + "-" * 50)
+    print(f"   Logistic Regression accuracy : {acc_lr:.2%}")
+    print(f"   Decision Tree accuracy       : {acc_dt:.2%}")
+
+    if acc_dt > acc_lr:
+        print("   🏆 Winner: Decision Tree")
+        model       = model_dt
+        predictions = preds_dt
+    else:
+        print("   🏆 Winner: Logistic Regression")
+        model       = model_lr
+        predictions = preds_lr
+
+    print("-" * 50)
+
+    # Step 5: Save the winner
     save_model(model)
     save_predictions(df_test, predictions)
 
     print("\n" + "=" * 50)
-    print("✅ Day 1 pipeline complete!")
-    print("   Next: swap placeholder data for P1's real CSV on Day 2")
+    print("✅ Day 2 pipeline complete!")
+    print("   Models compared, best one saved.")
     print("=" * 50)
 
 
