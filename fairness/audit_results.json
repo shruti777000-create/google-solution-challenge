@@ -1,0 +1,154 @@
+{
+  "biased_model": {
+    "model_label": "Original Biased Model",
+    "total_rows": 15060,
+    "audits": {
+      "sex": {
+        "group_col": "sex",
+        "overall_passed": false,
+        "overall_verdict": "\u274c BIASED",
+        "demographic_parity": {
+          "metric": "Demographic Parity",
+          "group_col": "sex",
+          "rates": {
+            "Male": 0.2053,
+            "Female": 0.0741
+          },
+          "gap": 0.1312,
+          "threshold": 0.1,
+          "passed": false,
+          "interpretation": "The approval rate gap between groups is 13.12%. This indicates potential discrimination."
+        },
+        "equal_opportunity": {
+          "metric": "Equal Opportunity",
+          "group_col": "sex",
+          "tprs": {
+            "Male": 0.5116,
+            "Female": 0.4919
+          },
+          "gap": 0.0197,
+          "threshold": 0.1,
+          "passed": true,
+          "interpretation": "Among truly qualified people, the model's detection rate differs by 1.97% across groups. Acceptable."
+        },
+        "fpr_parity": {
+          "metric": "FPR Parity",
+          "group_col": "sex",
+          "fprs": {
+            "Male": 0.0678,
+            "Female": 0.0207
+          },
+          "gap": 0.0471,
+          "threshold": 0.1,
+          "passed": true,
+          "interpretation": "Among unqualified people, the false approval rate differs by 4.71% across groups. Acceptable."
+        }
+      },
+      "race": {
+        "group_col": "race",
+        "overall_passed": false,
+        "overall_verdict": "\u274c BIASED",
+        "demographic_parity": {
+          "metric": "Demographic Parity",
+          "group_col": "race",
+          "rates": {
+            "Black": 0.0751,
+            "White": 0.1705,
+            "Other": 0.1148,
+            "Amer-Indian-Eskimo": 0.0537,
+            "Asian-Pac-Islander": 0.2623
+          },
+          "gap": 0.2086,
+          "threshold": 0.1,
+          "passed": false,
+          "interpretation": "The approval rate gap between groups is 20.86%. This indicates potential discrimination."
+        },
+        "equal_opportunity": {
+          "metric": "Equal Opportunity",
+          "group_col": "race",
+          "tprs": {
+            "White": 0.5092,
+            "Black": 0.4464,
+            "Asian-Pac-Islander": 0.6116,
+            "Other": 0.5,
+            "Amer-Indian-Eskimo": 0.3158
+          },
+          "gap": 0.2958,
+          "threshold": 0.1,
+          "passed": false,
+          "interpretation": "Among truly qualified people, the model's detection rate differs by 29.58% across groups. Qualified people from one group are being unfairly missed."
+        },
+        "fpr_parity": {
+          "metric": "FPR Parity",
+          "group_col": "race",
+          "fprs": {
+            "Black": 0.0249,
+            "White": 0.0518,
+            "Other": 0.0204,
+            "Amer-Indian-Eskimo": 0.0154,
+            "Asian-Pac-Islander": 0.115
+          },
+          "gap": 0.0996,
+          "threshold": 0.1,
+          "passed": true,
+          "interpretation": "Among unqualified people, the false approval rate differs by 9.96% across groups. Acceptable."
+        }
+      }
+    }
+  },
+  "fixed_model": null,
+  "comparison": {
+    "sex": {
+      "demographic_parity": {
+        "biased_gap": 0.1312,
+        "fixed_gap": null,
+        "improvement": null,
+        "improved": null
+      },
+      "equal_opportunity": {
+        "biased_gap": 0.0197,
+        "fixed_gap": null,
+        "improvement": null,
+        "improved": null
+      },
+      "fpr_parity": {
+        "biased_gap": 0.0471,
+        "fixed_gap": null,
+        "improvement": null,
+        "improved": null
+      }
+    },
+    "race": {
+      "demographic_parity": {
+        "biased_gap": 0.2086,
+        "fixed_gap": null,
+        "improvement": null,
+        "improved": null
+      },
+      "equal_opportunity": {
+        "biased_gap": 0.2958,
+        "fixed_gap": null,
+        "improvement": null,
+        "improved": null
+      },
+      "fpr_parity": {
+        "biased_gap": 0.0996,
+        "fixed_gap": null,
+        "improvement": null,
+        "improved": null
+      }
+    }
+  },
+  "summary": {
+    "biased_model": {
+      "total_checks": 6,
+      "passed": 3,
+      "failed": 3,
+      "verdict": "BIASED",
+      "score": "3/6 checks passed"
+    },
+    "fixed_model": {
+      "status": "not available"
+    }
+  }
+}
