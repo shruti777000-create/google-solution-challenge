@@ -10,8 +10,8 @@ import os
 import sys
 
 # Ensure UTF-8 output
-import io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 from fairness import run_full_audit   # your functions from Day 2
 

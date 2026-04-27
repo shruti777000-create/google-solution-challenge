@@ -1,7 +1,7 @@
 # report_generator.py
 import sys
-import io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 # Person 3 — Fairness Engineer
 # Day 4: Generate a clean PDF audit report from fairness metric scores
 #
