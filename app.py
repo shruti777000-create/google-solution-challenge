@@ -113,7 +113,8 @@ def process():
         y_raw = df[target_col]
         # Auto-encode target if it is categorical
         if y_raw.dtype == 'object' or y_raw.nunique() == 2:
-            y = pd.factorize(y_raw)[0]
+            # Wrap in Series to preserve index for .loc usage in balance_dataset
+            y = pd.Series(pd.factorize(y_raw)[0], index=y_raw.index)
         else:
             y = y_raw
 
