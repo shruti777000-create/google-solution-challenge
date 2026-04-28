@@ -198,24 +198,42 @@ def process_pipeline(file):
     # ── Step 2: Clean data ──
     df = clean_data(df)
 
-    # ── Step 3: Identify target column ──
-    target_col = 'income_>50K'
-    if target_col not in df.columns:
-        print(f"❌ Target column '{target_col}' not found.")
-        return {"error": f"Required target column '{target_col}' not found in the dataset."}
+    # ── Step 3: Identify target column (Smart Detection) ──
+    potential_targets = ['income_>50K', 'target', 'label', 'outcome', 'default', 'survived', 'class']
+    target_col = next((pt for pt in potential_targets if pt in df.columns), df.columns[-1])
+    
+    if len(df.columns) < 2:
+        return {"error": "Dataset must have at least two columns (Features and Target)."}
 
-    y     = df[target_col]
+    # Encode target if it's categorical (e.g., 'Yes'/'No' -> 1/0)
+    y = df[target_col]
+    if y.dtype == 'object' or y.nunique() == 2:
+        y = pd.factorize(y)[0]
+    
     X_raw = df.drop(columns=[target_col])
+    if X_raw.empty:
+        return {"error": "No features found to train the model."}
 
     # ── Step 4: Encode categorical features ──
     X = pd.get_dummies(X_raw)
 
-    # ── Step 5: Detect sensitive (gender) column ──
+    # ── Step 5: Detect sensitive column (Smart Detection) ──
     is_male, is_female = detect_sensitive_column(X)
+    
+    # Broad Search if specific gender detection fails
     if is_male is None:
-        print("❌ Could not identify gender column.")
-        return {"error": "Could not identify a gender/sex column after encoding. "
-                         "Ensure your dataset has a 'sex' or 'gender' column."}
+        sensitive_keywords = ['sex', 'gender', 'race', 'age', 'ethnicity', 'nationality', 'origin']
+        found_col = next((col for col in X_raw.columns if any(kw in col.lower() for kw in sensitive_keywords)), None)
+        
+        if found_col:
+            vals = X_raw[found_col].unique()
+            if len(vals) >= 2:
+                is_male = (X_raw[found_col] == vals[0])
+                is_female = (X_raw[found_col] == vals[1])
+                print(f"ℹ️ Detected sensitive column '{found_col}'. Comparing '{vals[0]}' vs '{vals[1]}'.")
+
+    if is_male is None or is_male.sum() == 0 or is_female.sum() == 0:
+        return {"error": "Could not identify a sensitive attribute with at least two distinct groups (e.g., Male/Female or Race). Please check your column names."}
 
     # ── Step 6: Train original model ──
     print("🧠 Training original model...")
