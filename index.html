@@ -503,17 +503,27 @@
     document.getElementById('metAfter').textContent    = pct(d.biasAfter);
     showEl('metricsRow', 'grid');
 
+    // Update Group Labels in UI
+    const groupA = d.groupA || 'Group A';
+    const groupB = d.groupB || 'Group B';
+    
+    document.querySelectorAll('.bar-label').forEach((el, i) => {
+        if (i % 2 === 0) el.textContent = groupA;
+        else el.textContent = groupB;
+    });
+
     // Summary text
     const sb = document.getElementById('summaryBox');
     sb.innerHTML =
-      `<span class="highlight">Model Accuracy:</span>  ${pct(d.accuracy)}\n\n` +
+      `<span class="highlight">Attribute Detected:</span> ${d.detectedAttribute}\n` +
+      `<span class="highlight">Model Accuracy:</span>     ${pct(d.accuracy)}\n\n` +
       `<span class="highlight">Before Bias:</span>\n` +
-      `  Male Approval:   ${pct(d.maleBefore)}\n` +
-      `  Female Approval: ${pct(d.femaleBefore)}\n` +
+      `  ${groupA} Approval:   ${pct(d.maleBefore)}\n` +
+      `  ${groupB} Approval: ${pct(d.femaleBefore)}\n` +
       `  Bias Gap:        ${pct(d.biasBefore)}\n\n` +
       `<span class="highlight">After Bias Fix:</span>\n` +
-      `  Male Approval:   ${pct(d.maleAfter)}\n` +
-      `  Female Approval: ${pct(d.femaleAfter)}\n` +
+      `  ${groupA} Approval:   ${pct(d.maleAfter)}\n` +
+      `  ${groupB} Approval: ${pct(d.femaleAfter)}\n` +
       `  Bias Gap:        ${pct(d.biasAfter)}\n` +
       `  Improvement:     ${d.improvementPct}% reduction in bias\n\n` +
       `<span class="highlight">Final Status:</span>     ${d.status}`;
